@@ -62,3 +62,32 @@ func MergeCommaSeparatedKeyValuePairs(lists ...string) string {
 	}
 	return strings.Join(result, ",")
 }
+
+func NewMapFromCommaSeparatedKeyValuePairs(list string) map[string]string {
+	result := make(map[string]string)
+	for _, kv := range strings.Split(list, ",") {
+		kv := strings.SplitN(kv, "=", 2)
+		if len(kv) == 2 {
+			// SplitN returns at most 2 elements.
+			// A key=value pair missing the `=` (that would have 1 only element in kv) is considered invalid too
+			// and is ignored. This is the same behavior as in the kubernetes autoscaler
+			// https://github.com/kubernetes/autoscaler/blob/c74af56329fe0e0c559f650f4e8455dde176621c/cluster-autoscaler/cloudprovider/clusterapi/clusterapi_unstructured.go#L191-L202
+			result[kv[0]] = kv[1]
+		}
+	}
+	return result
+}
+
+// JoinStringMaps joins node labels.
+// Source: https://github.com/kubernetes/autoscaler/blob/f0ceeacfca57014d07f53211a034641d52d85cfd/cluster-autoscaler/cloudprovider/utils.go#L118-L127
+func JoinStringMaps(items ...map[string]string) map[string]string {
+	result := make(map[string]string)
+	for _, m := range items {
+		if m != nil {
+			for k, v := range m {
+				result[k] = v
+			}
+		}
+	}
+	return result
+}

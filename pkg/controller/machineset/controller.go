@@ -44,6 +44,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
+const (
+	// labelsKey is the key used to store the labels of the MachineSet in the Machine's annotations as a
+	// comma-separated list of key=value pairs.
+	labelsKey = "capacity.cluster-autoscaler.kubernetes.io/labels"
+)
+
 var (
 	controllerKind = machinev1.SchemeGroupVersion.WithKind("MachineSet")
 
@@ -351,7 +357,8 @@ func (r *ReconcileMachineSet) createMachine(machineSet *machinev1.MachineSet) *m
 			APIVersion: gv.String(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Labels:      machineSet.Spec.Template.ObjectMeta.Labels,
+			Labels: util.JoinStringMaps(machineSet.Spec.Template.ObjectMeta.Labels,
+				util.NewMapFromCommaSeparatedKeyValuePairs(machineSet.Annotations[labelsKey])),
 			Annotations: machineSet.Spec.Template.ObjectMeta.Annotations,
 		},
 		Spec: machineSet.Spec.Template.Spec,
