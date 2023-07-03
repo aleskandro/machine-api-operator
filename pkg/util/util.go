@@ -47,12 +47,15 @@ func MergeCommaSeparatedKeyValuePairs(lists ...string) string {
 	merged := make(map[string]string)
 	for _, list := range lists {
 		for _, kv := range strings.Split(list, ",") {
-			kv := strings.Split(kv, "=")
-			if len(kv) != 2 {
-				// ignore invalid key=value pairs
+			kv := strings.SplitN(kv, "=", 2)
+			if len(kv) == 2 {
+				// SplitN returns at most 2 elements.
+				// A key=value pair missing the `=` (that would have 1 only element in kv) is considered invalid too
+				// and is ignored. This is the same behavior as in the kubernetes autoscaler
+				// https://github.com/kubernetes/autoscaler/blob/c74af56329fe0e0c559f650f4e8455dde176621c/cluster-autoscaler/cloudprovider/clusterapi/clusterapi_unstructured.go#L191-L202
+				merged[kv[0]] = kv[1]
 				continue
 			}
-			merged[kv[0]] = kv[1]
 		}
 	}
 	// convert the map back to a comma separated list
